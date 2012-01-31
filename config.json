@@ -1,0 +1,18 @@
+{
+  "alice": {
+    "router": {
+      "enabled" : true,
+      "ports"   : [4001, 4002, 4003, 4004]
+    }
+  },
+  "pluto": {
+    "user": {
+      "separation" : false,
+      "default"    : "simon"
+    },
+    "runit": {
+      "dir": "/usr/local/var/service"
+    },
+    "syslog" : false
+  }
+}

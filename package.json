@@ -1,0 +1,18 @@
+{
+  "author": "Simon Menke <simon.menke@gmail.com>",
+  "name": "alice",
+  "description": "Alice node installation",
+  "version": "0.0.0",
+  "homepage": "https://github.com/mrtesla",
+  "repository": {
+    "url": "git://github.com/mrtesla/alice.git"
+  },
+  "engines": {
+    "node": "~0.6.9"
+  },
+  "dependencies": {
+    "alice" : "git://github.com/mrtesla/alice.git#master"
+  },
+  "devDependencies": {},
+  "optionalDependencies": {}
+}

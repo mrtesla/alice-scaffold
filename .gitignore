@@ -1,3 +1,6 @@
+/var
+/env/ruby
+/env/node
 /node_modules
 /releases
 /shared

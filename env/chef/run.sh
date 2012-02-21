@@ -43,4 +43,7 @@ then
   fi
 fi
 
+export ROOT=$(pwd)
+echo "At root:    $ROOT"
+
 exec "$CHEF" -c env/chef/solo.rb

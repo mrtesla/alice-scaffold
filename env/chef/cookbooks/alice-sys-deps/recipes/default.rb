@@ -25,6 +25,9 @@ if platform?('mac_os_x')
   script "update-brew-index" do
     interpreter "bash"
     code        "brew update 1>&2"
+
+    retries        3
+    ignore_failure true
   end
 end
 

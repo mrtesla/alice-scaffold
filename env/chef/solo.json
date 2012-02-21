@@ -1,5 +1,6 @@
 {
   "run_list" : [
-    "role[app-server]"
+    "role[app-server]" ,
+    "role[edge-server]"
   ]
 }

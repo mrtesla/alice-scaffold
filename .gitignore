@@ -1,6 +1,7 @@
 /var
 /env/ruby
 /env/node
+/env/alice
 /node_modules
 /releases
 /shared

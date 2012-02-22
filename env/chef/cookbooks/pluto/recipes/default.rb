@@ -9,6 +9,11 @@
 
 NODE_VERSION = "0.6.11"
 
+directory File.join(node.alice.prefix, 'bin') do
+  mode  "0755"
+  action :create
+end
+
 directory File.dirname(node.alice.pluto.prefix) do
   mode  "0755"
   action :create
@@ -32,7 +37,35 @@ script "update-pluto" do
   SH
 end
 
-execute "start pluto" do
-  #not_if
-  command "sleep 1"
+file "bin/pluto" do
+  path File.join(node.alice.prefix, 'bin/pluto')
+  mode '0755'
+  content <<-BASH
+#!/usr/bin/env bash
+export PATH="#{node.alice.prefix}/env/node/0.6.11/bin:$PATH"
+export NODE_VERSION=0.6.11
+export PLUTO_ROOT="#{node.alice.prefix}"
+export PLUTO_SRV_ENABLED="#{node.alice.prefix}/var/runit/enabled-services"
+export PLUTO_SRV_AVAILABLE="#{node.alice.prefix}/var/runit/available-services"
+exec "#{node.alice.pluto.prefix}/bin/pluto" "$@"
+BASH
+end
+
+file "bin/pluto-init" do
+  path File.join(node.alice.prefix, 'bin/pluto-init')
+  mode '0755'
+  content <<-BASH
+#!/usr/bin/env bash
+export PATH="#{node.alice.prefix}/env/runit/2.1.1/bin:$PATH"
+export PLUTO_SRV_ENABLED="#{node.alice.prefix}/var/runit/enabled-services"
+exec runsvdir -P "$PLUTO_SRV_ENABLED" 'log: ...........................................................................................................................................................................................................................................................................................................................................................................................................'
+BASH
+end
+
+if platform?('mac_os_x')
+  template "launchd-pluto-init" do
+    path   File.expand_path('~/Library/LaunchAgents/cc.mrtesla.pluto-init.plist')
+    source "pluto_init.plist.erb"
+    variables(:alice_root => node.alice.prefix)
+  end
 end

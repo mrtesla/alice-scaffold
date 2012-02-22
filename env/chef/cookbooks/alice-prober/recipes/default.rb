@@ -33,7 +33,8 @@ script "update-sys:alice:prober" do
 end
 
 pluto_service "sys:alice:prober" do
-  command     "node index.js"
+  command     "node prober.js"
   cwd         node.alice.prober.prefix
   environment['NODE_VERSION'] = '0.6.10'
+  action [:enable, :start]
 end

@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+# redirect STDERR to STDOUT
+exec 2>&1
+
+echo "*******************************************"
+echo "*** Pluto is terminating: <%= @task %>"
+echo "*******************************************"
+
+export EXIT_CODE="$1"
+export EXIT_STATUS="$2"
+
+echo " * Loading Pluto environment"
+ALICE_ROOT=<%= @alice_root.inspect %>
+
+echo " * Running hooks"
+"$ALICE_ROOT/bin/pluto" hooks terminated <%= @task.inspect %>
+
+echo "*******************************************"
+echo ""
+

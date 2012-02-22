@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+
+# redirect STDERR to STDOUT
+exec 2>&1
+
+echo "*******************************************"
+echo "*** Pluto is booting: <%= @task %>"
+echo "*******************************************"
+
+
+echo " * Loading Pluto environment"
+ALICE_ROOT=<%= @alice_root.inspect %>
+
+
+# get port numbers
+echo " * Allocating port numbers:"
+<% @ports.each do |port| %>
+  <% if port['port'] %>
+    export <%= port['name'] %>=<%= port['port'].to_s.inspect %>
+  <% else %>
+    export <%= port['name'] %>=$("$ALICE_ROOT/bin/pluto" utils get-port)
+  <% end %>
+  echo "   - <%= port['name'] %>=$<%= port['name'] %>"
+<% end %>
+
+"$ALICE_ROOT/bin/pluto" utils dump-ports <%= @task.inspect %>
+
+
+# export ENV
+echo " * Exporting environment:"
+<% @env.each do |var| %>
+  export <%= var['name'] %>=<%= var['value'].to_s.inspect %>
+  echo "   - <%= var['name'] %>=$<%= var['name'] %>"
+<% end %>
+
+
+# tell pluto the process is about to start
+#   this is when any start hooks are called
+echo " * Running hooks"
+"$ALICE_ROOT/bin/pluto" hooks starting <%= @task.inspect %>
+
+
+# switching to $NODE_VERSION
+echo " * Selecting Node version: ${NODE_VERSION:-none}"
+[[ "x$NODE_VERSION" != "x" ]] && export PATH="$ALICE_ROOT/env/node/$NODE_VERSION/bin:$PATH"
+
+
+# switching to $RUBY_VERSION
+echo " * Selecting Ruby version: ${RUBY_VERSION:-none}"
+[[ "x$RUBY_VERSION" != "x" ]] && export PATH="$ALICE_ROOT/env/ruby/$RUBY_VERSION/bin:$PATH"
+
+
+<% if @user_separation %>
+  echo " * Switching to user: <%= @user %>"
+  export USER=<%= @user.inspect %>
+  export HOME="$(eval echo ~$USER)"
+<% end %>
+
+echo " * Changing current directory: <%= @root %>"
+cd <%= @root.inspect %>
+
+
+echo "*******************************************"
+echo ""
+
+<% if @user_separation %>
+  # start the process
+  exec chpst -u $USER -U $USER -0 <%= @command %>
+<% else %>
+  # start the process
+  exec chpst -0 <%= @command %>
+<% end %>

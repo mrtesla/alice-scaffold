@@ -1,0 +1,3 @@
+<% if @logger[:syslog] %>
+U<%= @logger[:host] || '127.0.0.1' %>:<%= @logger[:port] || 514 %>
+<% end %>

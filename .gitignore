@@ -1,7 +1,10 @@
 /var
+/bin
 /env/ruby
 /env/node
 /env/alice
+/env/redis
+/env/runit
 /node_modules
 /releases
 /shared

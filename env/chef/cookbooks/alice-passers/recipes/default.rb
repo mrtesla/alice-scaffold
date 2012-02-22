@@ -32,16 +32,13 @@ script "update-sys:alice:passer" do
   SH
 end
 
-pluto_service "sys:alice:passer:1" do
-  command     "node index.js"
-  cwd         node.alice.passers.prefix
-  environment['NODE_VERSION'] = NODE_VERSION
-  environment['PORT']         = 5001
-end
-
-pluto_service "sys:alice:passer:2" do
-  command     "node index.js"
-  cwd         node.alice.passers.prefix
-  environment['NODE_VERSION'] = NODE_VERSION
-  environment['PORT']         = 5002
+4.times do |i|
+  i += 1
+  pluto_service "sys:alice:passer:#{i}" do
+    command     "node passer.js $PORT"
+    cwd         node.alice.passers.prefix
+    environment['NODE_VERSION'] = NODE_VERSION
+    environment['PORT']         = 5000 + i
+    action [:enable, :start]
+  end
 end

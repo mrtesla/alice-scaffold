@@ -1,6 +1,13 @@
 {
   "run_list" : [
-    "role[app-server]" ,
-    "role[edge-server]"
-  ]
+    "role[alice-node]"
+  ],
+  "alice" : {
+    "pluto" : {
+      "user" : {
+        "default"    : "fd",
+        "separation" : false
+      }
+    }
+  }
 }

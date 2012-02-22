@@ -32,16 +32,13 @@ script "update-sys:alice:router" do
   SH
 end
 
-pluto_service "sys:alice:router:1" do
-  command     "node index.js"
-  cwd         node.alice.routers.prefix
-  environment['NODE_VERSION'] = '0.6.10'
-  environment['PORT']         = 4001
-end
-
-pluto_service "sys:alice:router:2" do
-  command     "node index.js"
-  cwd         node.alice.routers.prefix
-  environment['NODE_VERSION'] = '0.6.10'
-  environment['PORT']         = 4002
+4.times do |i|
+  i += 1
+  pluto_service "sys:alice:router:#{i}" do
+    command     "node router.js $PORT"
+    cwd         node.alice.routers.prefix
+    environment['NODE_VERSION'] = '0.6.10'
+    environment['PORT']         = 4000 + i
+    action [:enable, :start]
+  end
 end

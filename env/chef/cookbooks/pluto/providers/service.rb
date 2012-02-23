@@ -8,11 +8,10 @@ action :enable do
   srv = @srv
   env = new_resource.environment.dup
 
-  definition = {
-    'alice_root'      => node.alice.prefix,
-    'user_separation' => node.alice.pluto.user.separation,
-    'logger'          => (node.alice.pluto.logger || {}),
+  srv_dir = ::File.join(node.alice.prefix, 'var/runit/available-services', new_resource.service_name.to_s.gsub(':', '.'))
+  log_dir = ::File.join(node.alice.prefix, 'var/logs', new_resource.service_name.to_s.gsub(':', '.'))
 
+  definition_in = {
     'task'    => new_resource.service_name,
     'user'    => (new_resource.user || node.alice.pluto.user.default || 'pluto'),
     'root'    => new_resource.cwd,
@@ -22,95 +21,125 @@ action :enable do
       { 'name' => key.to_s, 'value' => value.to_s }
     end,
 
-    'ports' => []
+    'ports' => new_resource.ports
   }
 
-  srv_dir = ::File.join(node.alice.prefix, 'var/runit/available-services', new_resource.service_name.to_s.gsub(':', '.'))
+  definition = definition_in.merge({
+    'alice_root'      => node.alice.prefix,
+    'user_separation' => node.alice.pluto.user.separation,
+    'alice_logger'    => (node.alice.pluto.logger.to_hash || {}),
+  })
 
-  Chef::Resource::Directory.new("#{new_resource.service_name}-/", @run_context).tap do |r|
-    r.path srv_dir
-    r.mode "0755"
-    r.run_action(:create)
-  end
+  definition['alice_logger']['dir'] = log_dir
 
-  Chef::Resource::Directory.new("#{new_resource.service_name}-/supervise", @run_context).tap do |r|
-    r.path ::File.join(srv_dir, 'supervise')
-    r.mode "0755"
-    r.run_action(:create)
-  end
+  begin
+    _log_level = Chef::Log.level
+    Chef::Log.level = :warn
 
-  Chef::Resource::Directory.new("#{new_resource.service_name}-/log", @run_context).tap do |r|
-    r.path ::File.join(srv_dir, 'log')
-    r.mode "0755"
-    r.run_action(:create)
-  end
-
-  Chef::Resource::Directory.new("#{new_resource.service_name}-/log/main", @run_context).tap do |r|
-    r.path ::File.join(srv_dir, 'log', 'main')
-    r.mode "0755"
-    r.run_action(:create)
-  end
-
-  Chef::Resource::File.new("#{new_resource.service_name}-/supervise/lock", @run_context).tap do |r|
-    r.path ::File.join(srv_dir, 'supervise', 'lock')
-    r.mode "0644"
-    r.run_action(:create_if_missing)
-  end
-
-  Chef::Resource::Template.new("#{new_resource.service_name}-/run", @run_context).tap do |r|
-    r.path ::File.join(srv_dir, 'run')
-    r.mode "0755"
-    r.cookbook 'pluto'
-    r.source "process_run.sh.erb"
-    r.variables(definition)
-
-    r.run_action(:create)
-    if r.updated_by_last_action? and @srv.running
-      new_resource.notifies :restart, new_resource
-      new_resource.updated_by_last_action(true)
+    Chef::Resource::Directory.new("#{new_resource.service_name}-/", @run_context).tap do |r|
+      r.path srv_dir
+      r.mode "0755"
+      r.recursive true
+      r.run_action(:create)
     end
-  end
 
-  Chef::Resource::Template.new("#{new_resource.service_name}-/finish", @run_context).tap do |r|
-    r.path ::File.join(srv_dir, 'finish')
-    r.mode "0755"
-    r.cookbook 'pluto'
-    r.source "process_finish.sh.erb"
-    r.variables(definition)
-
-    r.run_action(:create)
-    if r.updated_by_last_action? and @srv.running
-      new_resource.notifies :restart, new_resource
-      new_resource.updated_by_last_action(true)
+    Chef::Resource::Directory.new("#{new_resource.service_name}-/supervise", @run_context).tap do |r|
+      r.path ::File.join(srv_dir, 'supervise')
+      r.mode "0755"
+      r.run_action(:create)
     end
-  end
 
-  Chef::Resource::Template.new("#{new_resource.service_name}-/log/run", @run_context).tap do |r|
-    r.path ::File.join(srv_dir, 'log', 'run')
-    r.mode "0755"
-    r.cookbook 'pluto'
-    r.source "logger_run.sh.erb"
-    r.variables(definition)
-
-    r.run_action(:create)
-    if r.updated_by_last_action? and @srv.running
-      new_resource.notifies :restart, new_resource
-      new_resource.updated_by_last_action(true)
+    Chef::Resource::Directory.new("#{new_resource.service_name}-/log", @run_context).tap do |r|
+      r.path ::File.join(srv_dir, 'log')
+      r.mode "0755"
+      r.run_action(:create)
     end
-  end
 
-  Chef::Resource::Template.new("#{new_resource.service_name}-/log/main/config", @run_context).tap do |r|
-    r.path ::File.join(srv_dir, 'log', 'main', 'config')
-    r.mode "0644"
-    r.cookbook 'pluto'
-    r.source "logger_config.erb"
-    r.variables(definition)
-
-    r.run_action(:create)
-    if r.updated_by_last_action? and @srv.running
-      new_resource.notifies :restart, new_resource
-      new_resource.updated_by_last_action(true)
+    Chef::Resource::Directory.new("#{new_resource.service_name}-/log/main", @run_context).tap do |r|
+      r.path log_dir
+      r.mode "0755"
+      r.recursive true
+      r.run_action(:create)
     end
+
+    Chef::Resource::File.new("#{new_resource.service_name}-/task_in.json", @run_context).tap do |r|
+      r.path ::File.join(srv_dir, 'task_in.json')
+      r.mode "0644"
+      r.content definition_in.to_json
+      r.run_action(:create)
+    end
+
+    Chef::Resource::File.new("#{new_resource.service_name}-/task_out.json", @run_context).tap do |r|
+      r.path ::File.join(srv_dir, 'task_out.json')
+      r.mode "0644"
+      r.content definition.to_json
+      r.run_action(:create)
+    end
+
+    Chef::Resource::File.new("#{new_resource.service_name}-/supervise/lock", @run_context).tap do |r|
+      r.path ::File.join(srv_dir, 'supervise', 'lock')
+      r.mode "0644"
+      r.run_action(:create_if_missing)
+    end
+
+    Chef::Resource::Template.new("#{new_resource.service_name}-/run", @run_context).tap do |r|
+      r.path ::File.join(srv_dir, 'run')
+      r.mode "0755"
+      r.cookbook 'pluto'
+      r.source "process_run.sh.erb"
+      r.variables(definition)
+
+      r.run_action(:create)
+      if r.updated_by_last_action? and @srv.running
+        new_resource.notifies :restart, new_resource
+        new_resource.updated_by_last_action(true)
+      end
+    end
+
+    Chef::Resource::Template.new("#{new_resource.service_name}-/finish", @run_context).tap do |r|
+      r.path ::File.join(srv_dir, 'finish')
+      r.mode "0755"
+      r.cookbook 'pluto'
+      r.source "process_finish.sh.erb"
+      r.variables(definition)
+
+      r.run_action(:create)
+      if r.updated_by_last_action? and @srv.running
+        new_resource.notifies :restart, new_resource
+        new_resource.updated_by_last_action(true)
+      end
+    end
+
+    Chef::Resource::Template.new("#{new_resource.service_name}-/log/run", @run_context).tap do |r|
+      r.path ::File.join(srv_dir, 'log', 'run')
+      r.mode "0755"
+      r.cookbook 'pluto'
+      r.source "logger_run.sh.erb"
+      r.variables(definition)
+
+      r.run_action(:create)
+      if r.updated_by_last_action? and @srv.running
+        new_resource.notifies :restart, new_resource
+        new_resource.updated_by_last_action(true)
+      end
+    end
+
+    Chef::Resource::Template.new("#{new_resource.service_name}-/log/config", @run_context).tap do |r|
+      r.path ::File.join(log_dir, 'config')
+      r.mode "0644"
+      r.cookbook 'pluto'
+      r.source "logger_config.erb"
+      r.variables(definition)
+
+      r.run_action(:create)
+      if r.updated_by_last_action? and @srv.running
+        new_resource.notifies :restart, new_resource
+        new_resource.updated_by_last_action(true)
+      end
+    end
+
+  ensure
+    Chef::Log.level = _log_level
   end
 end
 

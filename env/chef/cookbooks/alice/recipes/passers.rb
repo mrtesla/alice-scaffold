@@ -38,7 +38,7 @@ end
     command     "node passer.js $PORT"
     cwd         node.alice.passers.prefix
     environment['NODE_VERSION'] = NODE_VERSION
-    environment['PORT']         = 5000 + i
+    ports.push({ 'name' => 'PORT', 'type' => 'http', 'port' => (5000 + i) })
     action [:enable, :start]
   end
 end

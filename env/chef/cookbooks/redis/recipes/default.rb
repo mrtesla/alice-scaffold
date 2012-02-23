@@ -84,5 +84,6 @@ end
 pluto_service "srv:redis" do
   command "bin/redis-server etc/redis.conf"
   cwd     prefix
+  ports.push({ 'name' => 'PORT', 'type' => 'http', 'port' => node.alice.redis.port.to_i })
   action  [:enable, :start]
 end

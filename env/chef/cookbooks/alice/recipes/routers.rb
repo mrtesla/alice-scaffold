@@ -38,7 +38,7 @@ end
     command     "node router.js $PORT"
     cwd         node.alice.routers.prefix
     environment['NODE_VERSION'] = '0.6.10'
-    environment['PORT']         = 4000 + i
+    ports.push({ 'name' => 'PORT', 'type' => 'http', 'port' => (4000 + i) })
     action [:enable, :start]
   end
 end

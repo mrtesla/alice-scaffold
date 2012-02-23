@@ -19,10 +19,11 @@ directory File.dirname(node.alice.pluto.prefix) do
   action :create
 end
 
-git node.alice.pluto.prefix do
-  repository "git://github.com/mrtesla/pluto.git"
-  reference  "develop"
-  action     :sync
+git 'pluto' do
+  destination node.alice.pluto.prefix
+  repository  "git://github.com/mrtesla/pluto.git"
+  reference   "develop"
+  action      :sync
 
   notifies :run, "script[update-pluto]"
 end
@@ -42,11 +43,12 @@ file "bin/pluto" do
   mode '0755'
   content <<-BASH
 #!/usr/bin/env bash
-export PATH="#{node.alice.prefix}/env/node/0.6.11/bin:$PATH"
 export NODE_VERSION=0.6.11
+export PATH="#{node.alice.prefix}/env/node/$NODE_VERSION/bin:$PATH"
 export PLUTO_ROOT="#{node.alice.prefix}"
-export PLUTO_SRV_ENABLED="#{node.alice.prefix}/var/runit/enabled-services"
-export PLUTO_SRV_AVAILABLE="#{node.alice.prefix}/var/runit/available-services"
+export PLUTO_SRV_ENABLED="$PLUTO_ROOT/var/runit/enabled-services"
+export PLUTO_SRV_AVAILABLE="$PLUTO_ROOT/var/runit/available-services"
+
 exec "#{node.alice.pluto.prefix}/bin/pluto" "$@"
 BASH
 end
@@ -57,15 +59,76 @@ file "bin/pluto-init" do
   content <<-BASH
 #!/usr/bin/env bash
 export PATH="#{node.alice.prefix}/env/runit/2.1.1/bin:$PATH"
-export PLUTO_SRV_ENABLED="#{node.alice.prefix}/var/runit/enabled-services"
+export PLUTO_ROOT="#{node.alice.prefix}"
+export PLUTO_SRV_ENABLED="$PLUTO_ROOT/var/runit/enabled-services"
+
 exec runsvdir -P "$PLUTO_SRV_ENABLED" 'log: ...........................................................................................................................................................................................................................................................................................................................................................................................................'
 BASH
 end
 
+script "pluto-stop-all" do
+  only_if { resources(
+    "script[runit-#{node.alice.runit.version}]",
+    'git[pluto]', 'file[bin/pluto-init]', 'file[bin/pluto]'
+  ).any?(&:updated_by_last_action?) }
+
+  interpreter 'bash'
+  code <<-BASH
+    cd #{node.alice.prefix}
+    bin/pluto stop 'app:**' 'sys:**' 'srv:**' '**'
+  BASH
+end
+
 if platform?('mac_os_x')
+  launchd_plist = File.expand_path('~/Library/LaunchAgents/cc.mrtesla.pluto-init.plist')
+
+  #script "pluto-unload-launchd" do
+    #only_if { resources(
+      #"script[runit-#{node.alice.runit.version}]",
+      #'git[pluto]', 'file[bin/pluto-init]', 'file[bin/pluto]'
+    #).any?(&:updated_by_last_action?) }
+
+    #ignore_failure true
+
+    #interpreter 'bash'
+    #code <<-BASH
+      #lanuchctl unload -w #{launchd_plist}
+    #BASH
+  #end
+
   template "launchd-pluto-init" do
-    path   File.expand_path('~/Library/LaunchAgents/cc.mrtesla.pluto-init.plist')
+    only_if { resources(
+      "script[runit-#{node.alice.runit.version}]",
+      'git[pluto]', 'file[bin/pluto-init]', 'file[bin/pluto]'
+    ).any?(&:updated_by_last_action?) }
+
+    path   launchd_plist
     source "pluto_init.plist.erb"
     variables(:alice_root => node.alice.prefix)
   end
+
+  #script "pluto-load-launchd" do
+    #only_if { resources(
+      #"script[runit-#{node.alice.runit.version}]",
+      #'git[pluto]', 'file[bin/pluto-init]', 'file[bin/pluto]'
+    #).any?(&:updated_by_last_action?) }
+
+    #interpreter 'bash'
+    #code <<-BASH
+      #lanuchctl load -w #{launchd_plist}
+    #BASH
+  #end
+end
+
+script "pluto-start-all" do
+  only_if { resources(
+    "script[runit-#{node.alice.runit.version}]",
+    'git[pluto]', 'file[bin/pluto-init]', 'file[bin/pluto]'
+  ).any?(&:updated_by_last_action?) }
+
+  interpreter 'bash'
+  code <<-BASH
+    cd #{node.alice.prefix}
+    bin/pluto start 'srv:**' 'sys:**' 'app:**' '**'
+  BASH
 end

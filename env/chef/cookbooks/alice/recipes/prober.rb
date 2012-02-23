@@ -9,32 +9,40 @@
 
 NODE_VERSION = "0.6.11"
 
-directory File.dirname(node.alice.prober.prefix) do
+directory node.alice.prober.prefix do
   mode  "0755"
-  action :create
+  recursive true
+  action (node.alice.prober.enabled ? :create : :delete)
 end
 
-git node.alice.prober.prefix do
-  repository "git://github.com/mrtesla/alice-prober.git"
-  reference  "master"
-  action     :sync
+if node.alice.prober.enabled
+  git "alice-prober" do
+    destination node.alice.prober.prefix
+    repository  "git://github.com/mrtesla/alice-prober.git"
+    reference   "master"
+    action      :sync
+  end
 
-  notifies :run, "script[update-sys:alice:prober]"
-end
+  script "update-sys:alice:prober" do
+    only_if { !File.file?(File.join(node.alice.prober.prefix, '.ok')) or [resources(
+      'git[alice-prober]'
+    )].flatten.any?(&:updated_by_last_action?) }
 
-script "update-sys:alice:prober" do
-  action :nothing
-  interpreter "bash"
-  code <<-SH
-    export PATH="#{node.alice.prefix}/env/node/#{NODE_VERSION}/bin:$PATH"
-    cd "#{node.alice.prober.prefix}"
-    npm install 1>&2
-  SH
-end
+    interpreter "bash"
+    code <<-SH
+      export PATH="#{node.alice.prefix}/env/node/#{NODE_VERSION}/bin:$PATH"
+      cd "#{node.alice.prober.prefix}"
+      npm install 1>&2 || exit 1
+      touch .ok
+    SH
 
-pluto_service "sys:alice:prober" do
-  command     "node prober.js"
-  cwd         node.alice.prober.prefix
-  environment['NODE_VERSION'] = '0.6.10'
-  action [:enable, :start]
+    notifies :restart, "pluto_service[sys:alice:prober]"
+  end
+
+  pluto_service "sys:alice:prober" do
+    command     "node prober.js $PORT"
+    cwd         node.alice.prober.prefix
+    environment['NODE_VERSION'] = '0.6.10'
+    action [:enable, :start]
+  end
 end

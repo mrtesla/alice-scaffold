@@ -5,6 +5,7 @@
 /env/alice
 /env/redis
 /env/runit
+/env/varnish
 /node_modules
 /releases
 /shared

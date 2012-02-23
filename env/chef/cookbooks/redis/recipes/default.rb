@@ -17,11 +17,6 @@ directory prefix do
   recursive true
 end
 
-directory File.join(prefix, 'etc') do
-  mode  "0755"
-  action :create
-  recursive true
-end
 
 directory datdir do
   mode  "0755"
@@ -47,6 +42,7 @@ installer_src = <<-BASH
   echo "Building redis-#{version}"
   make 1>&2 || exit 3
   make PREFIX=$REDIS_PREFIX install 1>&2 || exit 4
+
   touch $REDIS_PREFIX/.ok
 BASH
 
@@ -71,6 +67,12 @@ script "redis-#{version}-cleanup" do
   action :nothing
   interpreter "bash"
   code        cleanup_src
+end
+
+directory File.join(prefix, 'etc') do
+  mode  "0755"
+  action :create
+  recursive true
 end
 
 template "redis-config" do

@@ -10,6 +10,7 @@
 version    = node.alice.runit.version
 prefix     = File.join(node.alice.prefix, "env/runit/#{version}")
 srvdir     = File.join(node.alice.prefix, "var/runit/enabled-services")
+avadir     = File.join(node.alice.prefix, "var/runit/available-services")
 
 directory prefix do
   mode  "0755"
@@ -18,6 +19,12 @@ directory prefix do
 end
 
 directory srvdir do
+  mode  "0755"
+  action :create
+  recursive true
+end
+
+directory avadir do
   mode  "0755"
   action :create
   recursive true

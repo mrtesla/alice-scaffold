@@ -24,17 +24,19 @@ git 'pluto' do
   repository  "git://github.com/mrtesla/pluto.git"
   reference   "develop"
   action      :sync
-
-  notifies :run, "script[update-pluto]"
 end
 
 script "update-pluto" do
-  action :nothing
+  only_if { !File.file?(File.join(node.alice.pluto.prefix, '.ok')) or [resources(
+    'git[pluto]'
+  )].flatten.any?(&:updated_by_last_action?) }
+
   interpreter "bash"
   code <<-SH
     export PATH="#{node.alice.prefix}/env/node/#{NODE_VERSION}/bin:$PATH"
     cd "#{node.alice.pluto.prefix}"
     npm install 1>&2
+    touch .ok
   SH
 end
 
@@ -82,19 +84,19 @@ end
 if platform?('mac_os_x')
   launchd_plist = File.expand_path('~/Library/LaunchAgents/cc.mrtesla.pluto-init.plist')
 
-  #script "pluto-unload-launchd" do
-    #only_if { resources(
-      #"script[runit-#{node.alice.runit.version}]",
-      #'git[pluto]', 'file[bin/pluto-init]', 'file[bin/pluto]'
-    #).any?(&:updated_by_last_action?) }
+  script "pluto-unload-launchd" do
+    only_if { resources(
+      "script[runit-#{node.alice.runit.version}]",
+      'git[pluto]', 'file[bin/pluto-init]', 'file[bin/pluto]'
+    ).any?(&:updated_by_last_action?) }
 
-    #ignore_failure true
+    ignore_failure true
 
-    #interpreter 'bash'
-    #code <<-BASH
-      #lanuchctl unload -w #{launchd_plist}
-    #BASH
-  #end
+    interpreter 'bash'
+    code <<-BASH
+      launchctl unload -w #{launchd_plist}
+    BASH
+  end
 
   template "launchd-pluto-init" do
     only_if { resources(
@@ -107,17 +109,17 @@ if platform?('mac_os_x')
     variables(:alice_root => node.alice.prefix)
   end
 
-  #script "pluto-load-launchd" do
-    #only_if { resources(
-      #"script[runit-#{node.alice.runit.version}]",
-      #'git[pluto]', 'file[bin/pluto-init]', 'file[bin/pluto]'
-    #).any?(&:updated_by_last_action?) }
+  script "pluto-load-launchd" do
+    only_if { resources(
+      "script[runit-#{node.alice.runit.version}]",
+      'git[pluto]', 'file[bin/pluto-init]', 'file[bin/pluto]'
+    ).any?(&:updated_by_last_action?) }
 
-    #interpreter 'bash'
-    #code <<-BASH
-      #lanuchctl load -w #{launchd_plist}
-    #BASH
-  #end
+    interpreter 'bash'
+    code <<-BASH
+      launchctl load -w #{launchd_plist}
+    BASH
+  end
 end
 
 script "pluto-start-all" do

@@ -9,36 +9,47 @@
 
 NODE_VERSION = "0.6.11"
 
-directory File.dirname(node.alice.passers.prefix) do
+directory node.alice.passers.prefix do
   mode  "0755"
-  action :create
+  recursive true
+  action (node.alice.passers.enabled ? :create : :delete)
 end
 
-git node.alice.passers.prefix do
-  repository "git://github.com/mrtesla/alice-passer.git"
-  reference  "master"
-  action     :sync
+if node.alice.passers.enabled
+  git "alice-passers" do
+    destination node.alice.passers.prefix
+    repository  "git://github.com/mrtesla/alice-passer.git"
+    reference   "master"
+    action      :sync
+  end
 
-  notifies :run, "script[update-sys:alice:passer]"
-end
+  script "update-sys:alice:passer" do
+    only_if { !File.file?(File.join(node.alice.passers.prefix, '.ok')) or [resources(
+      'git[alice-passers]'
+    )].flatten.any?(&:updated_by_last_action?) }
 
-script "update-sys:alice:passer" do
-  action :nothing
-  interpreter "bash"
-  code <<-SH
-    export PATH="#{node.alice.prefix}/env/node/#{NODE_VERSION}/bin:$PATH"
-    cd "#{node.alice.passers.prefix}"
-    npm install 1>&2
-  SH
-end
+    interpreter "bash"
+    code <<-SH
+      export PATH="#{node.alice.prefix}/env/node/#{NODE_VERSION}/bin:$PATH"
+      cd "#{node.alice.passers.prefix}"
+      npm install 1>&2 || exit 1
+      touch .ok
+    SH
 
-4.times do |i|
-  i += 1
-  pluto_service "sys:alice:passer:#{i}" do
-    command     "node passer.js $PORT"
-    cwd         node.alice.passers.prefix
-    environment['NODE_VERSION'] = NODE_VERSION
-    ports.push({ 'name' => 'PORT', 'type' => 'http', 'port' => (5000 + i) })
-    action [:enable, :start]
+    4.times do |i|
+      i += 1
+      notifies :restart, "pluto_service[sys:alice:passer:#{i}]"
+    end
+  end
+
+  4.times do |i|
+    i += 1
+    pluto_service "sys:alice:passer:#{i}" do
+      command     "node passer.js $PORT"
+      cwd         node.alice.passers.prefix
+      environment['NODE_VERSION'] = '0.6.10'
+      ports.push({ 'name' => 'PORT', 'type' => 'http', 'port' => (5000 + i) })
+      action [:enable, :start]
+    end
   end
 end

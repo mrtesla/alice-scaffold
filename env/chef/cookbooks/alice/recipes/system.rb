@@ -17,6 +17,8 @@ if platform?('mac_os_x')
     subversion
     curl
     wget
+    pcre
+    pkg-config
 
     imagemagick
     ghostscript
@@ -51,6 +53,10 @@ if platform?("ubuntu", "debian")
     libcurl-dev
     libcurl3-gnutls-dev
     libyaml-dev
+
+    pkg-config
+    libpcre3
+    libpcre3-dev
 
     libxml2-dev
     libxslt-dev

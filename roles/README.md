@@ -12,5 +12,5 @@ For example, create `roles/base_example.rb`:
     #override_attributes()
 
 Then upload it to the Chef Server:
-
+    
     knife role from file roles/base_example.rb

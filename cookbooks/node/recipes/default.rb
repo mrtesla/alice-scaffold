@@ -13,13 +13,18 @@ directory File.join(node.alice.prefix, 'env/node') do
 end
 
 node.alice.node.versions.each do |version|
-  prefix     = File.join(node.alice.prefix, "env/node/#{version}")
-  #locate_gcc = File.join(node.alice.prefix, "env/chef/cookbooks/node/versions/_locate_gcc.sh")
-  source     = File.join(node.alice.prefix, "env/chef/cookbooks/node/versions/#{version}.sh")
+  prefix = File.join(node.alice.prefix, "env/node/#{version}")
+  source = File.join(node.alice.prefix, "env/node/#{version}.sh")
+
+  template source do
+    source "#{version}.sh.erb"
+    mode   0644
+    variables(:prefix => prefix)
+  end
 
   script "node-#{version}" do
     not_if      { File.directory?(prefix) }
     interpreter "bash"
-    code        File.read(source).gsub('%PREFIX%', prefix.inspect)#.gsub('%LOCATE_GCC%', locate_gcc)
+    code        "bash #{source}"
   end
 end

@@ -50,8 +50,8 @@ if platform?("ubuntu", "debian")
     zlib1g
     zlib1g-dev
     libssl-dev
-    libcurl-dev
-    libcurl3-gnutls-dev
+    libcurl4-dev
+    libcurl4-gnutls-dev
     libyaml-dev
 
     pkg-config

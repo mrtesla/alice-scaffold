@@ -120,6 +120,37 @@ if platform?('mac_os_x')
       launchctl load -w #{launchd_plist}
     BASH
   end
+else
+  if File.directory?('/etc/init')
+    template "/etc/init/pluto-init.conf" do
+      mode "0644"
+      source "upstart.conf.erb"
+      variables :command => File.join(node.alice.prefix, 'bin/pluto-init')
+    end
+
+    execute "initctl status pluto-init" do
+      retries 30
+    end
+
+    # If we are stop/waiting, start
+    #
+    # Why, upstart, aren't you idempotent? :(
+    execute "service pluto-init start" do
+      only_if "initctl status pluto-init | grep stop"
+    end
+
+  else
+    svdir_line = 'PL:123456:respawn:'+File.join(node.alice.prefix, 'bin/pluto-init')
+
+    execute "echo '#{svdir_line}' >> /etc/inittab" do
+      not_if "grep '#{svdir_line}' /etc/inittab"
+      notifies :run, "execute[init q]", :immediately
+    end
+
+    execute "init q" do
+      action :nothing
+    end
+  end
 end
 
 script "pluto-start-all" do

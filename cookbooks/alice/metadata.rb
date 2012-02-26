@@ -6,6 +6,9 @@ description      "Installs/Configures alice"
 version          "0.1"
 
 depends "homebrew"
+depends "mysql"
+depends "database"
+
 depends "redis"
 depends "runit"
 depends "ruby"

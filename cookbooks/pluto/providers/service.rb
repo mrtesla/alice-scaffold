@@ -25,9 +25,11 @@ action :enable do
   }
 
   definition = definition_in.merge({
-    'alice_root'      => node.alice.prefix,
-    'user_separation' => node.alice.pluto.user.separation,
-    'alice_logger'    => (node.alice.pluto.logger.to_hash || {}),
+    'alice_root'        => node.alice.prefix,
+    'runit_root'        => ::File.join(node.alice.runit.prefix, node.alice.runit.version),
+    'user_separation'   => node.alice.pluto.user.separation,
+    'alice_logger'      => (node.alice.pluto.logger.to_hash || {}),
+    'alice_close_stdin' => !!new_resource.close_stdin
   })
 
   definition['alice_logger']['dir'] = log_dir

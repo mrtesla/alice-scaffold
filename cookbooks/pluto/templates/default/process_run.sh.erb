@@ -65,8 +65,8 @@ echo ""
 
 <% if @user_separation %>
   # start the process
-  exec chpst -u $USER -U $USER -0 <%= @command %>
+  exec <%= @runit_root %>/bin/chpst -u $USER -U $USER <%= '-0' if @alice_close_stdin %> <%= @command %>
 <% else %>
   # start the process
-  exec chpst -0 <%= @command %>
+  exec <%= @runit_root %>/bin/chpst <%= '-0' if @alice_close_stdin %> <%= @command %>
 <% end %>

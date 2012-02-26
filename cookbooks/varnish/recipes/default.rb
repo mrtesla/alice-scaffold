@@ -106,7 +106,7 @@ end
 template "varnish-config" do
   path   File.join(prefix, 'etc/varnish/default.vcl')
   source "default.vcl.erb"
-  variables(:routers => ['4001', '4002', '4003', '4004'])
+  variables(:routers => node.alice.routers.ports.map(&:to_s))
 
   notifies :restart, 'pluto_service[srv:varnish]'
 end
@@ -121,8 +121,12 @@ end
 pluto_service "srv:varnish" do
   command "sbin/varnishd -F -i alice -n #{datdir} -a :$PORT -T localhost:$CMD_PORT -f #{prefix}/etc/varnish/default.vcl -S #{prefix}/etc/varnish/secret -s file,#{datdir}/varnish_storage.bin,1500M"
   cwd     prefix
-  ports.push({ 'name' => 'PORT', 'type' => 'http', 'port' => 8800 })
+  user    'root'
+  ports.push({ 'name' => 'PORT', 'type' => 'http', 'port' => node.alice.varnish.port })
   ports.push({ 'name' => 'CMD_PORT', 'type' => 'varnish.cmd', 'port' => 6082 })
+
+  close_stdin false
+
   action  [:enable, :start]
 end
 

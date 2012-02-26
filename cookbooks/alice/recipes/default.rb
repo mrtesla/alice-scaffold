@@ -19,8 +19,15 @@ include_recipe "mysql::client"
 pluto_cleanup 'sys:**'
 pluto_cleanup 'srv:**'
 
-include_recipe "redis"             if node.alice.controller.enabled
-include_recipe "varnish"           if node.alice.controller.enabled
+if node.alice.controller.enabled
+  include_recipe "redis::server"
+elsif node.alice.routers.enabled
+  include_recipe "redis::tunnel"
+end
+
+if node.alice.routers.enabled
+  include_recipe "varnish"
+end
 
 include_recipe "alice::controller" if node.alice.controller.enabled
 include_recipe "alice::prober"

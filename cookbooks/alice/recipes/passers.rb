@@ -36,19 +36,30 @@ if node.alice.passers.enabled
       touch .ok
     SH
 
-    4.times do |i|
+    node.alice.passers.ports.size.times do |i|
       i += 1
       notifies :restart, "pluto_service[sys:alice:passer:#{i}]"
     end
   end
 
-  4.times do |i|
+  controller_endpoint = URI.parse(node.alice.controller.endpoint)
+
+  node.alice.passers.ports.each_with_index do |port, i|
     i += 1
     pluto_service "sys:alice:passer:#{i}" do
       command     "node passer.js $PORT"
       cwd         node.alice.passers.prefix
+
       environment['NODE_VERSION'] = '0.6.10'
-      ports.push({ 'name' => 'PORT', 'type' => 'http', 'port' => (5000 + i) })
+      environment['PASSER_HOST']  = node.name
+      environment['ALICE_HOST']   = controller_endpoint.host
+      environment['ALICE_PORT']   = (controller_endpoint.port || 4080).to_s
+
+      if node.alice.airbrake.key
+        environment['AIRBRAKE_KEY'] = node.alice.airbrake.key
+      end
+
+      ports.push({ 'name' => 'PORT', 'type' => 'http', 'port' => port })
       action [:enable, :start]
     end
   end

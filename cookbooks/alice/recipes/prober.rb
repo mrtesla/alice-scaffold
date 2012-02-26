@@ -39,10 +39,21 @@ if node.alice.prober.enabled
     notifies :restart, "pluto_service[sys:alice:prober]"
   end
 
+  controller_endpoint = URI.parse(node.alice.controller.endpoint)
+
   pluto_service "sys:alice:prober" do
     command     "node prober.js $PORT"
     cwd         node.alice.prober.prefix
+
     environment['NODE_VERSION'] = '0.6.10'
+    environment['PROBER_HOST']  = node.name
+    environment['ALICE_HOST']   = controller_endpoint.host
+    environment['ALICE_PORT']   = (controller_endpoint.port || 4080).to_s
+
+    if node.alice.airbrake.key
+      environment['AIRBRAKE_KEY'] = node.alice.airbrake.key
+    end
+
     action [:enable, :start]
   end
 end

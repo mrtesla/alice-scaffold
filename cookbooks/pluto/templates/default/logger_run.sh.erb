@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-exec svlogd -tt <%= @alice_logger['dir'].inspect %>
+exec <%= @runit_root %>/bin/svlogd -tt <%= @alice_logger['dir'].inspect %>

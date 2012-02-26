@@ -36,19 +36,30 @@ if node.alice.routers.enabled
       touch .ok
     SH
 
-    4.times do |i|
+    node.alice.routers.ports.size.times do |i|
       i += 1
       notifies :restart, "pluto_service[sys:alice:router:#{i}]"
     end
   end
 
-  4.times do |i|
+  controller_endpoint = URI.parse(node.alice.controller.endpoint)
+
+  node.alice.routers.ports.each_with_index do |port, i|
     i += 1
     pluto_service "sys:alice:router:#{i}" do
       command     "node router.js $PORT"
       cwd         node.alice.routers.prefix
+
       environment['NODE_VERSION'] = '0.6.10'
-      ports.push({ 'name' => 'PORT', 'type' => 'http', 'port' => (4000 + i) })
+      environment['ROUTER_HOST']  = node.name
+      environment['ALICE_HOST']   = controller_endpoint.host
+      environment['ALICE_PORT']   = (controller_endpoint.port || 4080).to_s
+
+      if node.alice.airbrake.key
+        environment['AIRBRAKE_KEY'] = node.alice.airbrake.key
+      end
+
+      ports.push({ 'name' => 'PORT', 'type' => 'http', 'port' => port })
       action [:enable, :start]
     end
   end

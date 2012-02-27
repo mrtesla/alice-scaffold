@@ -43,6 +43,7 @@ if node.alice.passers.enabled
   end
 
   controller_endpoint = URI.parse(node.alice.controller.endpoint)
+  airbrake_key        = data_bag_item('service-keys', 'airbreak')
 
   node.alice.passers.ports.each_with_index do |port, i|
     i += 1
@@ -55,8 +56,8 @@ if node.alice.passers.enabled
       environment['ALICE_HOST']   = controller_endpoint.host
       environment['ALICE_PORT']   = (controller_endpoint.port || 4080).to_s
 
-      if node.alice.airbrake.key
-        environment['AIRBRAKE_KEY'] = node.alice.airbrake.key
+      if airbrake_key and airbrake_key['key']
+        environment['AIRBRAKE_KEY'] = airbrake_key['key']
       end
 
       ports.push({ 'name' => 'PORT', 'type' => 'http', 'port' => port })

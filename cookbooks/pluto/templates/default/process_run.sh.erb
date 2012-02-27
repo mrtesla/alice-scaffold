@@ -40,6 +40,9 @@ echo " * Running hooks"
 "$ALICE_ROOT/bin/pluto" hooks starting <%= @task.inspect %>
 
 
+export PATH="$ALICE_ROOT/bin:$PATH"
+
+
 # switching to $NODE_VERSION
 echo " * Selecting Node version: ${NODE_VERSION:-none}"
 [[ "x$NODE_VERSION" != "x" ]] && export PATH="$ALICE_ROOT/env/node/$NODE_VERSION/bin:$PATH"

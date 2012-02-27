@@ -29,7 +29,15 @@ if node.alice.routers.enabled
   include_recipe "varnish"
 end
 
+if node.alice.elasticsearch.enabled
+  include_recipe "elasticsearch"
+end
+
 include_recipe "alice::controller" if node.alice.controller.enabled
 include_recipe "alice::prober"
 include_recipe "alice::passers"
 include_recipe "alice::routers"
+
+if node.alice.passers.enabled
+  include_recipe "alice::legacy_applications"
+end

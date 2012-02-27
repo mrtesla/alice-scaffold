@@ -47,6 +47,7 @@ file "bin/pluto" do
 #!/usr/bin/env bash
 export NODE_VERSION=0.6.11
 export PATH="#{node.alice.prefix}/env/node/$NODE_VERSION/bin:$PATH"
+export PATH="#{node.alice.prefix}/env/runit/2.1.1/bin:$PATH"
 export PLUTO_ROOT="#{node.alice.prefix}"
 export PLUTO_SRV_ENABLED="$PLUTO_ROOT/var/runit/enabled-services"
 export PLUTO_SRV_AVAILABLE="$PLUTO_ROOT/var/runit/available-services"
@@ -164,4 +165,11 @@ script "pluto-start-all" do
     cd #{node.alice.prefix}
     bin/pluto start 'srv:**' 'sys:**' 'app:**' '**'
   BASH
+end
+
+template File.join(node.alice.prefix, 'bin', 'staticd') do
+  mode   "0755"
+  source "staticd.sh.erb"
+  variables :node_bin => File.join(node.alice.prefix, 'env/node', NODE_VERSION, 'bin/node'),
+            :pluto    => node.alice.pluto.prefix
 end

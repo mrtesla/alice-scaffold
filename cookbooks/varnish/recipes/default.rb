@@ -20,7 +20,7 @@ directory prefix do
   recursive true
 end
 
-directory datdir do
+directory File.join(datdir, node.hostname) do
   mode  "0755"
   action :create
   recursive true
@@ -77,6 +77,8 @@ installer_src = <<-BASH
   make install 1>&2 || exit 3
   cd /tmp/varnish-build
 
+  rm "#{node.alice.prefix}/bin/varnish*"
+
   touch $VARNISH_PREFIX/.ok
 BASH
 
@@ -103,6 +105,13 @@ script "varnish-#{version}-cleanup" do
   code        cleanup_src
 end
 
+%w( varnishadm   varnishlog   varnishreplay  varnishstat  varnishtop
+    varnishhist  varnishncsa  varnishsizes   varnishtest ).each do |cmd|
+  link File.join(node.alice.prefix, 'bin', cmd) do
+    to File.join(prefix, 'bin', cmd)
+  end
+end
+
 template "varnish-config" do
   path   File.join(prefix, 'etc/varnish/default.vcl')
   source "default.vcl.erb"
@@ -119,7 +128,17 @@ file "varnish-secret" do
 end
 
 pluto_service "srv:varnish" do
-  command "sbin/varnishd -F -i alice -n #{datdir} -a :$PORT -T localhost:$CMD_PORT -f #{prefix}/etc/varnish/default.vcl -S #{prefix}/etc/varnish/secret -s file,#{datdir}/varnish_storage.bin,1500M"
+  command <<-SH.gsub(/\s+/m, ' ')
+    sbin/varnishd
+      -F
+      -i #{node.hostname}
+      -n #{datdir}/#{node.hostname}
+      -a :$PORT
+      -T localhost:$CMD_PORT
+      -f #{prefix}/etc/varnish/default.vcl
+      -S #{prefix}/etc/varnish/secret
+      -s file,#{datdir}/#{node.hostname}/varnish_storage.bin,1500M
+  SH
   cwd     prefix
   user    'root'
   ports.push({ 'name' => 'PORT', 'type' => 'http', 'port' => node.alice.varnish.port })

@@ -1,0 +1,5 @@
+source 'http://rubygems.org'
+gem 'chef'
+gem 'mongo',     :require => false
+gem 'mysql',     :require => false
+gem 'couchrest', :require => false

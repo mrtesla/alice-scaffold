@@ -24,6 +24,9 @@ action :enable do
     'ports' => new_resource.ports
   }
 
+  definition_in['env'].sort! { |a,b| a['name'] <=> b['name'] }
+  definition_in['ports'].sort! { |a,b| a['name'] <=> b['name'] }
+
   definition = definition_in.merge({
     'alice_root'        => node.alice.prefix,
     'runit_root'        => ::File.join(node.alice.runit.prefix, node.alice.runit.version),

@@ -1,7 +1,7 @@
 
 # load ports
 ports_file        = File.join(node.alice.prefix, 'var/pluto/legacy_ports.yml')
-available_ports   = (5100..6000).to_a
+available_ports   = (5100..6000).to_a - [5984]
 process_ports     = File.file?(ports_file) ? YAML.load_file(ports_file) : {}
 process_ports     = {} unless Hash === process_ports
 new_process_ports = {}

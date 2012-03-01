@@ -18,3 +18,5 @@ default["alice"]["passers"]["prefix"]  = File.join(alice_root, "env/alice/passer
 
 default["alice"]["controller"]["enabled"] = false
 default["alice"]["controller"]["prefix"]  = File.join(alice_root, "env/alice/controller")
+
+default["alice"]["mysql"]["enabled"] = false

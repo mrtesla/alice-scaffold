@@ -1,0 +1,9 @@
+production:
+  via: smtp # via: sendmail
+  host:     <%= @node.alice.graylog2.email.smtp_host.inspect %>
+  enable_starttls_auto: true
+  port:     <%= @node.alice.graylog2.email.smtp_port %>
+  auth:     <%= @node.alice.graylog2.email.smtp_auth.inspect %> # plain, login, cram_md5 - Comment out or remove to use no auth
+  user:     <%= @node.alice.graylog2.email.smtp_username.inspect %>
+  password: <%= @node.alice.graylog2.email.smtp_password.inspect %>
+  domain:   <%= @node.alice.graylog2.email.smtp_domain.inspect %> # the HELO domain provided by the client to the server

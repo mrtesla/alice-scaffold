@@ -38,6 +38,9 @@ if platform?("ubuntu", "debian")
     build-essential
     autoconf
     automake
+    cmake
+    libtool
+    scons
     bison
     libreadline6
     libreadline6-dev
@@ -50,9 +53,13 @@ if platform?("ubuntu", "debian")
     zlib1g
     zlib1g-dev
     libssl-dev
-    libcurl4-dev
     libcurl4-gnutls-dev
     libyaml-dev
+    openjdk-6-jre-headless
+
+    erlang
+    libicu-dev
+    libmozjs-dev
 
     pkg-config
     libpcre3
@@ -61,6 +68,10 @@ if platform?("ubuntu", "debian")
     libxml2-dev
     libxslt-dev
     ncurses-dev
+    libboost-dev
+    libboost-program-options-dev
+    libboost-thread-dev
+    libboost-filesystem-dev
 
     git
     subversion

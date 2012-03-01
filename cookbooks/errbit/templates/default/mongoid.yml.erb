@@ -1,0 +1,27 @@
+# Use environment variables
+production:
+  host: localhost
+  port: <%= @node.alice.mongodb.port %>
+  username: <%= @node.alice.errbit.mongodb.username.inspect %>
+  password: <%= @node.alice.errbit.mongodb.password.inspect %>
+  database: <%= @node.alice.errbit.mongodb.database.inspect %>
+
+# or specify values manually
+# production:
+#   host: localhost
+#   port: 27017
+#   username:
+#   password:
+#   database: errbit
+
+
+# Values below are for development and testing.
+# You may comment out them or just ignore.
+
+development:
+  host: localhost
+  database: errbit_development
+
+test:
+  host: localhost
+  database: errbit_test

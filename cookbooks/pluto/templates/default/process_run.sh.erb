@@ -66,6 +66,8 @@ cd <%= @root.inspect %>
 echo "*******************************************"
 echo ""
 
+ulimit -n 32000
+
 <% if @user_separation %>
   # start the process
   exec <%= @runit_root %>/bin/chpst -u $USER -U $USER <%= '-0' if @alice_close_stdin %> <%= @command %>

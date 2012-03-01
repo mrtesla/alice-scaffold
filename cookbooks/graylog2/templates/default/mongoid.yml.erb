@@ -1,0 +1,27 @@
+# Use environment variables
+production:
+  host: localhost
+  port: <%= @node.alice.mongodb.port %>
+  username: <%= @node.alice.graylog2.mongodb.username.inspect %>
+  password: <%= @node.alice.graylog2.mongodb.password.inspect %>
+  database: <%= @node.alice.graylog2.mongodb.database.inspect %>
+
+# or specify values manually
+# production:
+#   host: localhost
+#   port: 27017
+#   username:
+#   password:
+#   database: graylog2
+
+
+# Values below are for development and testing.
+# You may comment out them or just ignore.
+
+development:
+  host: localhost
+  database: graylog2_development
+
+test:
+  host: localhost
+  database: graylog2_test

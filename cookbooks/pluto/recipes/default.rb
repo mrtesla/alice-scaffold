@@ -7,7 +7,8 @@
 # All rights reserved - Do Not Redistribute
 #
 
-NODE_VERSION = "0.6.11"
+NODE_VERSION  = "0.6.11"
+RUNIT_VERSION = "2.1.1"
 
 directory File.join(node.alice.prefix, 'bin') do
   mode  "0755"
@@ -45,9 +46,9 @@ file "bin/pluto" do
   mode '0755'
   content <<-BASH
 #!/usr/bin/env bash
-export NODE_VERSION=0.6.11
+export NODE_VERSION=#{NODE_VERSION}
 export PATH="#{node.alice.prefix}/env/node/$NODE_VERSION/bin:$PATH"
-export PATH="#{node.alice.prefix}/env/runit/2.1.1/bin:$PATH"
+export PATH="#{node.alice.prefix}/env/runit/#{RUNIT_VERSION}/bin:$PATH"
 export PLUTO_ROOT="#{node.alice.prefix}"
 export PLUTO_SRV_ENABLED="$PLUTO_ROOT/var/runit/enabled-services"
 export PLUTO_SRV_AVAILABLE="$PLUTO_ROOT/var/runit/available-services"
@@ -61,25 +62,12 @@ file "bin/pluto-init" do
   mode '0755'
   content <<-BASH
 #!/usr/bin/env bash
-export PATH="#{node.alice.prefix}/env/runit/2.1.1/bin:$PATH"
+export PATH="#{node.alice.prefix}/env/runit/#{RUNIT_VERSION}/bin:$PATH"
 export PLUTO_ROOT="#{node.alice.prefix}"
 export PLUTO_SRV_ENABLED="$PLUTO_ROOT/var/runit/enabled-services"
 
 exec runsvdir -P "$PLUTO_SRV_ENABLED" 'log: ...........................................................................................................................................................................................................................................................................................................................................................................................................'
 BASH
-end
-
-script "pluto-stop-all" do
-  only_if { resources(
-    "script[runit-#{node.alice.runit.version}]",
-    'git[pluto]', 'file[bin/pluto-init]', 'file[bin/pluto]'
-  ).any?(&:updated_by_last_action?) }
-
-  interpreter 'bash'
-  code <<-BASH
-    cd #{node.alice.prefix}
-    bin/pluto stop 'app:**' 'sys:**' 'srv:**' '**'
-  BASH
 end
 
 if platform?('mac_os_x')
@@ -152,19 +140,6 @@ else
       action :nothing
     end
   end
-end
-
-script "pluto-start-all" do
-  only_if { resources(
-    "script[runit-#{node.alice.runit.version}]",
-    'git[pluto]', 'file[bin/pluto-init]', 'file[bin/pluto]'
-  ).any?(&:updated_by_last_action?) }
-
-  interpreter 'bash'
-  code <<-BASH
-    cd #{node.alice.prefix}
-    bin/pluto start 'srv:**' 'sys:**' 'app:**' '**'
-  BASH
 end
 
 template File.join(node.alice.prefix, 'bin', 'staticd') do

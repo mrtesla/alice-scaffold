@@ -1,0 +1,10 @@
+[
+  {rabbit, [
+    {tcp_listeners, [
+      {"0.0.0.0", <%= @node.alice.rabbitmq.amqp_port %>}
+    ]},
+    {default_user, <<"<%= @node.alice.rabbitmq.root_user %>">>},
+    {default_pass, <<"<%= @node.alice.rabbitmq.root_password %>">>}
+  ]},
+  {rabbitmq_mochiweb, [{listeners, [{mgmt, [{port, <%= @node.alice.rabbitmq.http_port %>}]}]}]}
+].

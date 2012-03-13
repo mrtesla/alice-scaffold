@@ -24,6 +24,10 @@ if node.alice.mongodb.enabled
   include_recipe "mongodb"
 end
 
+if node.alice.rabbitmq.enabled
+  include_recipe "rabbitmq"
+end
+
 if node.alice.couchdb.enabled
   include_recipe "couchdb"
 end
